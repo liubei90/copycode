@@ -1,5 +1,10 @@
-import Vue from './instance/index';
+import { initMixin } from './init';
 
-Vue.version = '__VERSION__';
+
+function Vue(options) {
+  this._init(options);
+}
+
+initMixin(Vue);
 
 export default Vue;

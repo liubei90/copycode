@@ -1,5 +1,8 @@
 import { initLifecycle } from './lifecycle.js';
 import { initEvents } from './events.js';
+import { initRender } from './render.js';
+import { initProvide, initInjections } from './inject';
+import { initState } from './state';
 
 let uid = 0;
 
