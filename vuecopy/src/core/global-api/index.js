@@ -1,0 +1,49 @@
+import config from '../config';
+import { initUse } from './use';
+import { initMixin } from './mixin';
+import { initExtend } from './extend';
+import { initAssetRegisters } from './assets';
+import { set, del } from '../observer/index';
+import { ASSET_TYPES } from 'shared/constants';
+import builtInComponents from '../components/index';
+
+import {
+  warn,
+  extend,
+  nextTick,
+  mergeOptions,
+  defineReactive
+} from '../util/index';
+
+export function initGlobalAPI(Vue) {
+  const configDef = {};
+  configDef.get = () => config;
+  Object.defineProperty(Vue, 'config', configDef);
+
+  Vue.util = {
+    warn,
+    extend,
+    mergeOptions,
+    defineReactive
+  }
+
+  Vue.set = set;
+  Vue.delete = del;
+  Vue.nextTick = nextTick;
+
+  Vue.options = Object.create(null);
+  ASSET_TYPES.forEach(type => {
+    Vue.options[type+'s'] = Object.create(null);
+  });
+
+  Vue.options._base = Vue;
+
+
+  extend(Vue.options.components, builtInComponents);
+
+  initUse(Vue);
+  initMixin(Vue);
+  initExtend(Vue);
+  initAssetRegisters(Vue);
+
+}

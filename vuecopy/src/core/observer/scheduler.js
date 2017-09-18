@@ -43,3 +43,45 @@ function flushSchedulerQueue() {
   callUpdatedHooks(updatedQueue);
 }
 
+function callUpdatedHooks(queue) {
+  let i = queue.length;
+  while(i--) {
+    const watcher = queue[i]
+    const vm = watcher.vm;
+    if(vm._watcher === watcher && vm._isMounted) {
+      callHook(vm, 'updated');
+    }
+  }
+}
+
+export function queueActivatedComponent(vm) {
+  vm._inactive = false;
+  activatedChildren.push(vm);
+}
+
+function callActivatedHooks(queue) {
+  for(let i = 0; i < queue.length; i++) {
+    queue[i]._inactive = true;
+    activateddChildComponent(queue[i], true);
+  }
+}
+
+export function queueWatcher(watcher) {
+  const id = watcher.id;
+  if(has[id] == null) {
+    has[id] = true;
+    if(!flushing) {
+      queue.push(watcher);
+    } else {
+      let i = queue.length - 1;
+      while(i > index && queue[i].id > watcher.id) {
+        i--;
+      }
+      queue.splice(i+1, 0, watcher);
+    }
+    if(!watcher) {
+      waiting = true;
+      nextTick(flushSchedulerQueue);
+    }
+  }
+}
