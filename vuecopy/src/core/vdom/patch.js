@@ -220,7 +220,272 @@ export function createPatchFunction(backend) {
   }
 
   function setScope(vnode) {
-    ;
+    let i;
+    let ancestor = vnode;
+    while(ancestor) {
+      if(isDef(i = ancestor.context) && isDef(i = i.$options._scopeId)) {
+        nodeOps.setAttribute(vnode.elm, i, '');
+      }
+      ancestor = ancestor.parent;
+    }
+    if(isDef(i = activeInstance) && i != vnode.context && isDef(i = i.$options._scopeId)) {
+      nodeOps.setAttribute(vnode.elm, i, '');
+    }
+  }
+
+  function addVnodes(parentElm, refElm, vnodes, startIdx, endIdx, insertedVnodeQueue) {
+    for(; startIdx <= endIdx; ++startIdx) {
+      createElm(vnodes[startIdx], insertedVnodeQueue, parentElm, refElm);
+    }
+  }
+
+  function invokeDestroyHook(vnode) {
+    let i, j;
+    const data = vnode.data;
+    if(isDef(data)) {
+      if(isDef(i = data.hook) && isDef(i = i.destory)) i(vnode);
+      for(i = 0; i < cbs.destory.length; ++i) cbs.destory[i](vnode);
+    }
+    if(isDef(i = vnode.children)) {
+      for(j = 0; j < vnode.children.length; ++j) {
+        invokeDestroyHook(vnode.children[j]);
+      }
+    }
+  }
+
+  function removeVnodes(parentElm, vnodes, startIdx, endIdx) {
+    for(; startIdx <= endIdx; ++startIdx) {
+      const ch = vnodes[startIdx];
+      if(isDef(ch)) {
+        if(isDefch.tag) {
+          removeAndInvokeRemoveHook(ch);
+          invokeDestroyHook(ch);
+        } else {
+          removeNode(ch.elm);
+        }
+      }
+    }
+  }
+
+  function removeAndInvokeRemoveHook(vnode, rm) {
+    if(isDef(rm) || isDef(vnode.data)) {
+      let i;
+      const listeners = cbs.remove.length + 1;
+      if(isDef(rm)) {
+        rm.listeners += listeners;
+      } else {
+        rm = createRmCb(vnode.elm, listeners);
+      }
+      if(isDef(i = vnode.componentInstance) && isDef(i = i._vnode) && isDef(i.data)) {
+        removeAndInvokeRemoveHook(i, rm);
+      }
+      for(i = 0; i < cbs.remove.length; ++i) {
+        cbs.remove[i](vnode, rm);
+      }
+      if(isDef(i = vnode.data.hook) && isDef(i = i.remove)) {
+        i(vnode, rm);
+      } else {
+        rm();
+      }
+    } else {
+      removeNode(vnode.elm);
+    }
+  }
+
+  function updateChildren(parentElm, oldCh, newCh, insertedVnodeQueue, removeOnly) {
+    let oldStartIdx = 0;
+    let newStartIdx = 0;
+    let oldEndIdx = oldCh.length - 1;
+    let oldStartVnode = oldCh[0];
+    let oldEndVnode = oldCh[oldEndIdx];
+    let newEndIdx = newCh.length - 1;
+    let newStartVnode = newCh[0];
+    let newEndVnode = newCh[newEndIdx];
+    let oldKeyToIdx, idxInOld, elmToMove, refElm;
+
+    const canMove = !removeOnly;
+
+    while(oldStartIdx <= oldEndIdx && newStartIdx <= newEndIdx) {
+      if(isUndef(oldStartVnode)) {
+        oldStartVnode = oldCh[++oldStartIdx];
+      } else if(isUndef(oldEndVnode)) {
+        oldEndVnode = oldCh[--oldEndIdx];
+      } else if(sameVnode(oldStartVnode, newStartVnode)) {
+        patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue);
+        oldStartVnode = oldCh[++oldStartIdx];
+        newStartVnode = newCh[++newStartIdx];
+      } else if(sameVnode(oldEndVnode, newEndVnode)) {
+        patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue);
+        oldEndVnode = oldCh[--oldEndIdx];
+        newEndVnode = newCh[--newEndIdx];
+      } else if(sameVnode(oldStartVnode, newEndVnode)) {
+        patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue);
+        canMove && nodeOps.insertBefore(parentElm, oldStartVnode.elm, nodeOps.nextSibling(oldEndVnode.elm));
+        oldStartVnode = oldCh[++oldStartIdx];
+        newEndVnode = newCh[--newEndIdx];
+      } else if(sameVnode(oldEndVnode, newStartVnode)) {
+        patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue);
+        canMove && nodeOps.insertBefore(parentElm, oldEndVnode.elm, oldStartVnode.elm);
+        oldEndVnode = oldCh[--oldEndIdx];
+        newStartVnode = newCh[++newStartIdx];
+      } else {
+        if(isUndef(oldKeyToIdx)) oldKeyToIdx = createKeyToOldIdx(oldCh, oldStartIdx, oldEndIdx);
+        idxInOld = isDef(newStartVnode.key) ? oldKeyToIdx[newStartVnode.key] : null;
+        if(isUndef(idxInOld)) {
+          createElm(newStartVnode, insertedVnodeQueue, parentElm, oldStartVnode.elm);
+          newStartVnode = newCh[++newStartIdx];
+        } else {
+          elmToMove = oldCh[idxInOld];
+          if(!elmToMove) {
+            ;
+          }
+          if(sameVnode(elmToMove, newStartVnode)) {
+            patchVnode(elmToMove, newStartVnode, insertedVnodeQueue);
+            oldCh[idxInOld] = undefined;
+            canMove && nodeOps.insertBefore(parentElm, elmToMove.elm, oldStartVnode.elm);
+            newStartVnode = newCh[++newStartIdx];
+          } else {
+            createElm(newStartVnode, insertedVnodeQueue, parenteElm, oldStartVnode);
+            newStartVnode = newCh[++newStartIdx];
+          }
+        }
+      }
+    }
+
+    if(oldStartIdx > oldEndIdx) {
+      refElm = isUndef(newCh[newEndIdx + 1]) ? null : newCh[newEndIdx + 1].elm;
+      addVnodes(parentElm, refElm, newCh, newStartIdx, newEndIdx, insertedVnodeQueue);
+    } else if(newStartIdx > newEndIdx) {
+      removeVnodes(parentElm, oldCh, oldStartIdx, oldEndIdx);
+    }
+  }
+
+  function patchVnode(oldVnode, vnode, insertedVnodeQueue, removeOnly) {
+    if(oldVnode === vnode) {
+      return
+    }
+
+    const elm = vnode.elm = oldVnode.elm;
+
+    if(isTrue(oldVnode.isAsyncPlaceholder)) {
+      if(isDef(vnode.asyncFactory.resolved)) {
+        hydrate(oldVnode.elm, vnode, insertedVnodeQueue);
+      } else {
+        vnode.isAsyncPlaceholder = true;
+      }
+      return;
+    }
+
+    if(isTrue(vnode.isStatic) && 
+    isTrue(oldVnode.isStatic) && 
+    vnode.key === oldVnode.key && 
+    (isTrue(vnode.isCloned) || isTrue(vnode.isOnce))) {
+      vnode.componentInstance = oldVnode.componentInstance;
+      return;
+    }
+
+    let i;
+    const data = vnode.data;
+    if(isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
+      i(oldVnode, vnode);
+    }
+
+    const oldCh = oldVnode.chilren;
+    const ch = vnode.children;
+    if(isDef(data) && isPatchable(vnode)) {
+      for(i = 0; i < cbs.update.length; i++) cbs.update[i](oldVnode, vnode);
+      if(isDef(i = data.hook) && isDef(i = i.update)) i(oldVnode, vnode);
+    }
+    if(isUndef(vnode.text)) {
+      if(isDef(oldCh) && isDef(ch)) {
+        if(oldCh !== ch) updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly);
+      } else if(isDef(ch)) {
+        if(isDef(oldVnode.text)) nodeOps.setTextContent(elm, '');
+        addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
+      } else if(isDef(oldCh)) {
+        removeVnodes(elm, oldCh, 0, oldCh.length - 1);
+      } else if(isDef(oldVnode.text)) {
+        nodeOps.setTextContent(elm, '');
+      }
+    } else if(oldVnode.text !== vnode.text) {
+      nodeOps.setTextContent(elm, vnode.text);
+    }
+    if(isDef(data)) {
+      if(isDef(i = data.hook) && isDef(i = i.postpatch)) i(oldVnode, vnode);
+    }
+  }
+
+  function invokeInsertHook(vnode, queue, initial) {
+    if(isTrue(initial) && isDef(vnode.parent)) {
+      vnode.parent.data.pendingInsert = queue;
+    } else {
+      for(let i = 0; i < queue.length; ++i) {
+        queue[i].data.hook.insert(queue[i]);
+      }
+    }
+  }
+
+  let bailed = false;
+
+  const isRenderedModule = makeMap('attrs,style,class,staticClass,staticStyle,key');
+
+  function hydrate(elm, vnode, insertedVnodeQueue) {
+    if(isTrue(vnode.isComment) && isDef(vnode.asyncFactory)) {
+      vnode.elm = elm;
+      vnode.isAsyncPlaceholder = true;
+      return true;
+    }
+    if(1) {
+      if(!assertNodeMatch(elm, vnode)) {
+        return false;
+      }
+    }
+    vnode.elm = elm;
+    const { tag, data, children } = vnode;
+    if(isDef(data)) {
+      if(isDef(i = data.hook) && isDef(i = i.init)) i(vnode, true);
+      if(isDef(i = vnode.componentInstance)) {
+        initComponent(vnode, insertedVnodeQueue);
+        return true;
+      }
+    }
+    if(isDef(tag)) {
+      if(isDef(children)) {
+        if(!elm.hasChildNodes()) {
+          createChildren(vnode, children, insertedVnodeQueue);
+        } else {
+          let childrenMatch = true;
+          let childNode = elm.firstChild;
+          for(let i = 0; i < children.length; i++) {
+            if(!childNode || !hydrate(childNode, children[i], insertedVnodeQueue)) {
+              childrenMatch = false;
+              break;
+            }
+            childNode = childNode.nextSibling;
+          }
+
+          if(!childrenMatch || childNode) {
+            if(1 && typeof console !== 'undefined' && !bailed) {
+              bailed = true;
+              console.warn('Parent: ', elm)
+              console.warn('Mismatching childNodes vs. VNodes: ', elm.childNodes, children)
+            }
+            return false;
+          }
+        }
+      }
+      if(isDef(data)) {
+        for(const key in data) {
+          if(!isRenderedModule(key)) {
+            invokeCreateHooks(vnode, insertedVnodeQueue);
+            break;
+          }
+        }
+      }
+    } else if(elm.data !== vnode.text) {
+      elm.data = vnode.text;
+    }
+    return true;
   }
 
 
