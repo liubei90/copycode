@@ -1,0 +1,39 @@
+build ?= release
+
+
+CFLAGS := -std=c99 -pedantic -Wall -Wextra -Wno-unused-parameter
+
+CFLAGS += -ffunction-sections -fdata-sections
+LDFLAGS += -Wl,--gc-sections
+
+CFLAGS += -g
+
+CFLAGS += -Os
+LDFLAGS += -Wl,-s
+
+OUT := build/$(build)
+
+default: static
+static: $(OUTT) $(OUT)/mujs $(OUT)/libmujs.a
+
+one.c: $(SRCS)
+	ls $(SRCS)
+
+$(OUT):
+	mkdir -p $(OUT)
+
+$(OUT)/main.o: main.c $(HDRS)
+	$(CC) $(CFLAGS) -o 
+
+$(OUT)/libmujs.o: one.c $(HDRS)
+	$(CC) $(CFLAGS) -o
+
+$(OUT)/libmujs.a: $(OUT)/libmujs.o
+	$(AR) cru
+
+$(OUT)/mujs: $(OUT)/libmujs.o $(OUT)/main.o
+	$(CC) $(LDFLAGS) -o
+
+
+release:
+	$(MAKE) build=release
