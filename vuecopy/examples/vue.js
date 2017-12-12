@@ -5077,8 +5077,10 @@ function createPatchFunction (backend) {
 
   var inPre = 0;
   function createElm (vnode, insertedVnodeQueue, parentElm, refElm, nested) {
+    console.log('createElm 1');
     vnode.isRootInsert = !nested; // for transition enter check
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
+      console.log('createElm 2');
       return
     }
 
@@ -5086,6 +5088,7 @@ function createPatchFunction (backend) {
     var children = vnode.children;
     var tag = vnode.tag;
     if (isDef(tag)) {
+      console.log('createElm 3');
       {
         if (data && data.pre) {
           inPre++;
@@ -5111,20 +5114,24 @@ function createPatchFunction (backend) {
 
       /* istanbul ignore if */
       {
+        console.log('createElm 4');
         createChildren(vnode, children, insertedVnodeQueue);
         if (isDef(data)) {
           invokeCreateHooks(vnode, insertedVnodeQueue);
         }
         insert(parentElm, vnode.elm, refElm);
+        console.log('createElm 5');
       }
 
       if ("development" !== 'production' && data && data.pre) {
         inPre--;
       }
     } else if (isTrue(vnode.isComment)) {
+      console.log('createElm 6');
       vnode.elm = nodeOps.createComment(vnode.text);
       insert(parentElm, vnode.elm, refElm);
     } else {
+      console.log('createElm 7');
       vnode.elm = nodeOps.createTextNode(vnode.text);
       insert(parentElm, vnode.elm, refElm);
     }
@@ -5391,6 +5398,7 @@ function createPatchFunction (backend) {
   }
 
   function patchVnode (oldVnode, vnode, insertedVnodeQueue, removeOnly) {
+    console.log('patchVnode 1');
     if (oldVnode === vnode) {
       return
     }
@@ -5399,8 +5407,10 @@ function createPatchFunction (backend) {
 
     if (isTrue(oldVnode.isAsyncPlaceholder)) {
       if (isDef(vnode.asyncFactory.resolved)) {
+        console.log('patchVnode 2');
         hydrate(oldVnode.elm, vnode, insertedVnodeQueue);
       } else {
+        console.log('patchVnode 3');
         vnode.isAsyncPlaceholder = true;
       }
       return
@@ -5415,6 +5425,7 @@ function createPatchFunction (backend) {
       vnode.key === oldVnode.key &&
       (isTrue(vnode.isCloned) || isTrue(vnode.isOnce))
     ) {
+      console.log('patchVnode 4');
       vnode.componentInstance = oldVnode.componentInstance;
       return
     }
@@ -5422,30 +5433,38 @@ function createPatchFunction (backend) {
     var i;
     var data = vnode.data;
     if (isDef(data) && isDef(i = data.hook) && isDef(i = i.prepatch)) {
+      console.log('patchVnode 5');
       i(oldVnode, vnode);
     }
 
     var oldCh = oldVnode.children;
     var ch = vnode.children;
     if (isDef(data) && isPatchable(vnode)) {
+      console.log('patchVnode 6');
       for (i = 0; i < cbs.update.length; ++i) { cbs.update[i](oldVnode, vnode); }
       if (isDef(i = data.hook) && isDef(i = i.update)) { i(oldVnode, vnode); }
     }
     if (isUndef(vnode.text)) {
       if (isDef(oldCh) && isDef(ch)) {
+        console.log('patchVnode 7');
         if (oldCh !== ch) { updateChildren(elm, oldCh, ch, insertedVnodeQueue, removeOnly); }
       } else if (isDef(ch)) {
+        console.log('patchVnode 8');
         if (isDef(oldVnode.text)) { nodeOps.setTextContent(elm, ''); }
         addVnodes(elm, null, ch, 0, ch.length - 1, insertedVnodeQueue);
       } else if (isDef(oldCh)) {
+        console.log('patchVnode 9');
         removeVnodes(elm, oldCh, 0, oldCh.length - 1);
       } else if (isDef(oldVnode.text)) {
+        console.log('patchVnode 10');
         nodeOps.setTextContent(elm, '');
       }
     } else if (oldVnode.text !== vnode.text) {
+      console.log('patchVnode 11');
       nodeOps.setTextContent(elm, vnode.text);
     }
     if (isDef(data)) {
+      console.log('patchVnode 12');
       if (isDef(i = data.hook) && isDef(i = i.postpatch)) { i(oldVnode, vnode); }
     }
   }
@@ -5547,8 +5566,10 @@ function createPatchFunction (backend) {
   }
 
   return function patch (oldVnode, vnode, hydrating, removeOnly, parentElm, refElm) {
+    console.log('patch 1');
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) { invokeDestroyHook(oldVnode); }
+      console.log('patch 2');
       return
     }
 
@@ -5556,16 +5577,20 @@ function createPatchFunction (backend) {
     var insertedVnodeQueue = [];
 
     if (isUndef(oldVnode)) {
+      console.log('patch 3');
       // empty mount (likely as component), create new root element
       isInitialPatch = true;
       createElm(vnode, insertedVnodeQueue, parentElm, refElm);
     } else {
+      console.log('patch 4');
       var isRealElement = isDef(oldVnode.nodeType);
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
+        console.log('patch 5');
         // patch existing root node
         patchVnode(oldVnode, vnode, insertedVnodeQueue, removeOnly);
       } else {
         if (isRealElement) {
+          console.log('patch 6');
           // mounting to a real element
           // check if this is server-rendered content and if we can perform
           // a successful hydration.
@@ -5594,6 +5619,7 @@ function createPatchFunction (backend) {
         // replacing existing element
         var oldElm = oldVnode.elm;
         var parentElm$1 = nodeOps.parentNode(oldElm);
+        console.log('patch 7', oldElm, parentElm$1);
         createElm(
           vnode,
           insertedVnodeQueue,
@@ -5603,8 +5629,10 @@ function createPatchFunction (backend) {
           oldElm._leaveCb ? null : parentElm$1,
           nodeOps.nextSibling(oldElm)
         );
+        console.log('patch 8');
 
         if (isDef(vnode.parent)) {
+          console.log('patch 9');
           // component root element replaced.
           // update parent placeholder node element, recursively
           var ancestor = vnode.parent;
@@ -5620,13 +5648,16 @@ function createPatchFunction (backend) {
         }
 
         if (isDef(parentElm$1)) {
+          console.log('patch 10');
           removeVnodes(parentElm$1, [oldVnode], 0, 0);
         } else if (isDef(oldVnode.tag)) {
+          console.log('patch 11');
           invokeDestroyHook(oldVnode);
         }
       }
     }
 
+    console.log('patch 12');
     invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch);
     return vnode.elm
   }
